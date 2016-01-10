@@ -16,7 +16,7 @@ typedef struct {
 
 vector<map<char, RotateParam>> rotate_axis = {
     {{'x', {false, 0.0, 0}}, {'y', {false, 0.0, 0}}, {'z', {false, 0.0, 0}}}, 
-    {{'x', {false, 0.0, 0}}, {'y', {false, 0.0, 0}}, {'z', {false, 0.0, 0}}}
+    {{'x', {false, 0.0, 0}}, {'y', {false, 0.0, 0}}, {'z', {false, 90.0, 0}}}
     };
 
 void drawCube()
@@ -25,9 +25,13 @@ void drawCube()
         glBegin(GL_QUADS);
 
         //prednja
+        glNormal3f(0, 0, 1);
         glVertex3f(0, 0, 0);
+        glNormal3f(0, 0, 0);
         glVertex3f(3, 0, 0);
+        glNormal3f(1, 0, 0);
         glVertex3f(3, 1, 0);
+        glNormal3f(0, 0, 0);
         glVertex3f(0, 1, 0);
 
         //desna
@@ -66,7 +70,7 @@ void drawSphere(void) {
     glutSolidSphere(1.0, 30, 30);
 }
 bool keyStates[256];
-bool animate = 0;
+bool animate = 1;
 
 void keyPressed (unsigned char key, int /*x*/, int /*y*/) 
 {
@@ -95,13 +99,13 @@ void keyOperations ()
         rotate_axis[0]['x'].rotate = rotate_axis[0]['y'].rotate = false;
         rotate_axis[0]['z'].rotate = true;
     } else if (keyStates['b'] == true) {
-        rotate_axis[1]['y'].rotate = rotate_axis[0]['z'].rotate = false;
+        rotate_axis[1]['y'].rotate = rotate_axis[1]['z'].rotate = false;
         rotate_axis[1]['x'].rotate = true;
     } else if (keyStates['n'] == true) {
-        rotate_axis[1]['x'].rotate = rotate_axis[0]['z'].rotate = false;
+        rotate_axis[1]['x'].rotate = rotate_axis[1]['z'].rotate = false;
         rotate_axis[1]['y'].rotate = true;
     } else if (keyStates['m'] == true) {
-        rotate_axis[1]['x'].rotate = rotate_axis[0]['y'].rotate = false;
+        rotate_axis[1]['x'].rotate = rotate_axis[1]['y'].rotate = false;
         rotate_axis[1]['z'].rotate = true;
     } else if (keyStates['s'] == true) {
         animate = true;
@@ -110,7 +114,8 @@ void keyOperations ()
     }
 }
 
-float trail[100000][16];
+vector<vector<float>> trail(1, vector<float>(16));
+
 int i = 0;
 
 void display()
@@ -136,15 +141,14 @@ void display()
         }
     }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor (0.3, 0.3, 0.3, 0.0);
+    //glClearColor (0.3, 0.3, 0.3, 0.0);
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    gluLookAt(0.0,0.0,34.0, // camera
-              0.0,0.0,-1.0, // where
-              0.0f,1.0f,0.0f); // up vector
-
+    //glLoadIdentity();
     //glRotatef(180, 1, 0, 0);
     glColor3f(0, 0.5, 0);
+    glPushMatrix();
+        glTranslatef(0.0, 0.0, -1.9);
+        glScalef(0.04, 0.04, 0.04);
     glPushMatrix();
         glPushMatrix();
             glTranslatef(-1.5, 0.0, -1.5);
@@ -191,11 +195,15 @@ void display()
                                 gluCylinder(obj, 1.0, 1, 3, 30, 30);
                             glPopMatrix();
                             glPushMatrix();
-                                glTranslatef(0, -3.0, 0);
-                                glRotatef(-90, 1.0, 0, 0);
-                                gluDisk(obj, 0.0, 1.0, 30, 30);
-                                i++;
-                                glGetFloatv(GL_MODELVIEW_MATRIX, trail[i]);
+                                glPushMatrix();
+                                    glTranslatef(0, -3.0, 0);
+                                    glRotatef(-90, 1.0, 0, 0);
+                                    gluDisk(obj, 0.0, 1.0, 30, 30);
+                                    i++;
+                                    vector<float> tmp (16);
+                                    trail.push_back(tmp);
+                                    glGetFloatv(GL_MODELVIEW_MATRIX, &trail[i][0]);
+                                glPopMatrix();
                             glPopMatrix();
                         glPopMatrix();
                     glPopMatrix(); /* end 2nd constellation */
@@ -204,15 +212,18 @@ void display()
         glPopMatrix();
     glPopMatrix();
 
+    glPopMatrix();
+    glBegin(GL_LINE_STRIP);
+    glColor3f(0.545, 0.0, 0.0);
     for(int j = 0; j < i-1; j++){
-        glColor3f(1.0, 0.0, 0.0);
-        glPushMatrix();
-            glLoadMatrixf(trail[j]);
-            glBegin(GL_POINTS);
-            glVertex3f(0.0, 0.0, 0.0);
-            glEnd();
-        glPopMatrix();
+        //glLoadMatrixf(trail[j]);
+        //glVertex3f(0.0, 0.0, 0.0);
+        //cout << trail[j][12] << ", " <<  trail[j][13] << ", " << trail[j][14] << "," << endl;
+        
+        glVertex3f(trail[j][12], trail[j][13], trail[j][14]);
+        
     }
+    glEnd();
     glutSwapBuffers();        
 }
 
@@ -228,9 +239,9 @@ void reshapeFunc(int x, int y)
     glLoadIdentity();
     //Angle of view:40 degrees
     //Near clipping plane distance: 0.5
-    //Far clipping plane distance: 20.0
+    //Far clipping plane distance: 90.0
      
-    gluPerspective(40.0,(GLdouble)x/(GLdouble)y,0.5,20.0);
+    gluPerspective(40.0,(GLdouble)x/(GLdouble)y,0.5,90.0);
  
     glViewport(0,0,x,y);  //Use the whole window for rendering
 }
@@ -244,23 +255,38 @@ void idleFunc(void)
     return;
 }
 
-void init(void) 
+void initLight()
 {
-    /*
-   GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+   glEnable(GL_LIGHTING);
+   glEnable(GL_LIGHT0);
+   GLfloat mat_specular[] = { 0.8, 0.8, 0.8, 1.0 };
+   GLfloat cyan[] = {0.f, .8f, .8f, 1.f};
+
    GLfloat mat_shininess[] = { 50.0 };
-   GLfloat light_position[] = { 0.0, 9.0, 0.0, 0.0 };
+   GLfloat light_position[] = { .5, 1.0, 1.0, 0.0 };
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glShadeModel (GL_SMOOTH);
 
+   glMaterialfv(GL_FRONT, GL_DIFFUSE, cyan);
    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+
    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
-   glEnable(GL_LIGHTING);
-   glEnable(GL_LIGHT0);
-   */
-   //glEnable(GL_DEPTH_TEST);
+   glColorMaterial ( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE) ;
+   glEnable(GL_COLOR_MATERIAL);
+
+}
+void init(void) 
+{
+    initLight();
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    //gluLookAt(0.0,0.0,34.0, // camera
+    //0.0,0.0,-1.0, // where
+    //0.0f,1.0f,0.0f); // up vector
+
 }
 
 int main (int argc, char **argv)
@@ -275,7 +301,7 @@ int main (int argc, char **argv)
     glutCreateWindow("Pendulum");
     init();
 
-    glEnable(GL_DEPTH_CLAMP); //dont cut out clip plane
+    //glEnable(GL_DEPTH_CLAMP); //dont cut out clip plane
 
     //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);  //---> only wireframe
     //Assign  the function used in events
