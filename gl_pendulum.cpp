@@ -21,6 +21,12 @@ vector<map<char, RotateParam>> rotate_axis = {
 
 void drawCube()
 {
+    GLfloat green[] = { 0.4f, 0.4f, 0.4f, 1.0f };
+    GLfloat white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, green);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0);
     glPushMatrix();
         glBegin(GL_QUADS);
 
@@ -67,6 +73,12 @@ void drawCube()
     glPopMatrix();
 }
 void drawSphere(void) {
+    GLfloat green[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+    GLfloat white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, green);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0);
     glutSolidSphere(1.0, 30, 30);
 }
 bool keyStates[256];
@@ -140,12 +152,12 @@ void display()
             }
         }
     }
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //glClearColor (0.3, 0.3, 0.3, 0.0);
     glMatrixMode(GL_MODELVIEW);
-    //glLoadIdentity();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glClear(GL_COLOR_BUFFER_BIT);
+    glLoadIdentity();
     //glRotatef(180, 1, 0, 0);
-    glColor3f(0, 0.5, 0);
     glPushMatrix();
         glTranslatef(0.0, 0.0, -1.9);
         glScalef(0.04, 0.04, 0.04);
@@ -159,12 +171,18 @@ void display()
             for (auto& kv: rotate_axis[0]) {
                 glRotatef(kv.second.angle, (float)kv.first == 'x', (float)kv.first == 'y', (float)kv.first == 'z');
             }
-            glColor3f(1, 1, 0);
             drawSphere();
             glPushMatrix();
                 GLUquadricObj *obj = gluNewQuadric();
                 glTranslatef(0, -1.0, 0);
 
+                GLfloat blue[] = { 0.647, 0.874f, 0.949, 1.0f };
+                GLfloat white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+                GLfloat black[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+                glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, blue);
+                glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, blue);
+                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
+                glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0);
                 glPushMatrix();
                     glRotatef(90, 1.0, 0, 0);
                     gluDisk(obj, 0.0, 1.0, 30, 30);
@@ -179,7 +197,6 @@ void display()
 
                     /* 2nd constellation */
 
-                    glColor3f(0, 1, 0);
                     glPushMatrix();
                         glTranslatef(0, -1.0, 0);
 
@@ -190,6 +207,11 @@ void display()
                         glPushMatrix();
                             glTranslatef(0, -1.0, 0);
                             glPushMatrix();
+                                GLfloat orange[] = { 1.0, 0.47, 0.0, 1.0 };
+                                glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, orange);
+                                glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, orange);
+                                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
+                                glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0);
                                 glRotatef(90, 1.0, 0, 0);
                                 gluDisk(obj, 0.0, 1.0, 30, 30);
                                 gluCylinder(obj, 1.0, 1, 3, 30, 30);
@@ -214,7 +236,13 @@ void display()
 
     glPopMatrix();
     glBegin(GL_LINE_STRIP);
-    glColor3f(0.545, 0.0, 0.0);
+    //GLfloat red[] = { 0.545, 0.0, 0.0, 1.0 };
+    GLfloat red[] = { 1.0, 0.0, 0.0, 1.0 };
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, red);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, red);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 80.0);
+    //glColor3f(0.545, 0.0, 0.0);
     for(int j = 0; j < i-1; j++){
         //glLoadMatrixf(trail[j]);
         //glVertex3f(0.0, 0.0, 0.0);
@@ -227,9 +255,6 @@ void display()
     glutSwapBuffers();        
 }
 
-void displayPrepare(void) {
-    display();
-}
 
 void reshapeFunc(int x, int y)
 {
@@ -241,7 +266,8 @@ void reshapeFunc(int x, int y)
     //Near clipping plane distance: 0.5
     //Far clipping plane distance: 90.0
      
-    gluPerspective(40.0,(GLdouble)x/(GLdouble)y,0.5,90.0);
+    gluPerspective(39.0,(GLdouble)x/(GLdouble)y,0.6,21.0);
+    glMatrixMode(GL_MODELVIEW);
  
     glViewport(0,0,x,y);  //Use the whole window for rendering
 }
@@ -250,7 +276,7 @@ void idleFunc(void)
 {
     keyOperations();
     if (animate) {
-        displayPrepare();
+        display();
     }
     return;
 }
@@ -259,33 +285,25 @@ void initLight()
 {
    glEnable(GL_LIGHTING);
    glEnable(GL_LIGHT0);
-   GLfloat mat_specular[] = { 0.8, 0.8, 0.8, 1.0 };
-   GLfloat cyan[] = {0.f, .8f, .8f, 1.f};
+   GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+   GLfloat cyan[] = {0.8f, 0.8f, 0.8f, 1.f};
+   GLfloat mat_ambient[] = {0.2f, 0.2f, 0.2f, 1.f};
 
    GLfloat mat_shininess[] = { 50.0 };
-   GLfloat light_position[] = { .5, 1.0, 1.0, 0.0 };
-   glClearColor (0.0, 0.0, 0.0, 0.0);
-   glShadeModel (GL_SMOOTH);
+   GLfloat light_position[] = { .5, 0.0, -3.5, 0.5 };
+   //glShadeModel (GL_SMOOTH);
 
-   glMaterialfv(GL_FRONT, GL_DIFFUSE, cyan);
-   glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+   glLightfv(GL_LIGHT0, GL_AMBIENT, mat_ambient);
+   glLightfv(GL_LIGHT0, GL_DIFFUSE, cyan);
+   glLightfv(GL_LIGHT0, GL_SPECULAR, mat_specular);
 
-   glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-
-   glColorMaterial ( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE) ;
-   glEnable(GL_COLOR_MATERIAL);
-
+   //glEnable(GL_COLOR_MATERIAL);
 }
 void init(void) 
 {
     initLight();
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
-    //gluLookAt(0.0,0.0,34.0, // camera
-    //0.0,0.0,-1.0, // where
-    //0.0f,1.0f,0.0f); // up vector
 
 }
 
@@ -306,7 +324,7 @@ int main (int argc, char **argv)
     //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);  //---> only wireframe
     //Assign  the function used in events
     glutReshapeFunc(reshapeFunc);
-    glutDisplayFunc(displayPrepare);
+    glutDisplayFunc(display);
     glutIdleFunc(idleFunc);
 
     glutKeyboardFunc(keyPressed); 
