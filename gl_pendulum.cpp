@@ -8,6 +8,9 @@
 
 using namespace std;
 
+// struct RotateParam {
+    //....
+//}
 typedef struct {
     bool rotate;
     double angle;
@@ -99,6 +102,10 @@ void keyUp (unsigned char key, int /*x*/, int /*y*/)
 
 void keyOperations () 
 {
+    // switch(keystates[key]){
+    //    case  'q':
+    //}
+    //}
     if (keyStates[27] == true) {
         exit(0);
     } else if (keyStates['q'] == true) {
@@ -126,13 +133,15 @@ void keyOperations ()
     }
 }
 
+//vector array
+// vector<array<float, 16>> trail;
 vector<vector<float>> trail(1, vector<float>(16));
 
 int i = 0;
 
 void display()
 {
-
+    //angle collistion detection
     for (auto& i: rotate_axis) {
         for (auto& kv: i) {
             if(kv.second.rotate) {
@@ -222,6 +231,8 @@ void display()
                                     glRotatef(-90, 1.0, 0, 0);
                                     gluDisk(obj, 0.0, 1.0, 30, 30);
                                     i++;
+                                    // array<float, 16> tmp;
+                                    // glGetFloatv(GL_MODELVIEW_MATRIX, &tmp);
                                     vector<float> tmp (16);
                                     trail.push_back(tmp);
                                     glGetFloatv(GL_MODELVIEW_MATRIX, &trail[i][0]);
