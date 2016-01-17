@@ -290,8 +290,8 @@ void initLight()
    GLfloat mat_ambient[] = {0.2f, 0.2f, 0.2f, 1.f};
 
    GLfloat mat_shininess[] = { 50.0 };
-   GLfloat light_position[] = { .5, 0.0, -3.5, 0.5 };
-   //glShadeModel (GL_SMOOTH);
+   GLfloat light_position[] = { 0.8, 0.8, -3.5, 0.2 };
+   glShadeModel (GL_SMOOTH);
 
    glLightfv(GL_LIGHT0, GL_AMBIENT, mat_ambient);
    glLightfv(GL_LIGHT0, GL_DIFFUSE, cyan);
