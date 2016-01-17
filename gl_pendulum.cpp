@@ -22,7 +22,7 @@ vector<vector<float>> trail(1, vector<float>(16));
 int trail_index = 0;
 
 vector<map<char, RotateParam>> rotate_axis = {
-    {{'x', {false, 0.0, 0}}, {'y', {false, 0.0, 0}}, {'z', {false, 0.0, 0}}}, 
+    {{'x', {false, 0.0, 0}}, {'y', {false, 0.0, 0}}, {'z', {false, 0.0, 0}}},
     {{'x', {false, 0.0, 0}}, {'y', {false, 0.0, 0}}, {'z', {false, 90.0, 0}}}
     };
 
@@ -153,20 +153,20 @@ void drawBottomCylinder(void) {
 bool keyStates[256];
 bool animate = 1;
 
-void keyPressed (unsigned char key, int /*x*/, int /*y*/) 
+void keyPressed (unsigned char key, int /*x*/, int /*y*/)
 {
-    keyStates[key] = true; 
+    keyStates[key] = true;
     cout << key << " key pressed"<<endl;
 }
 
-void keyUp (unsigned char key, int /*x*/, int /*y*/) 
+void keyUp (unsigned char key, int /*x*/, int /*y*/)
 {
     keyStates[key] = false;
     return;
 }
 
 
-void keyOperations () 
+void keyOperations ()
 {
     if (keyStates[27] == true) {
         exit(0);
@@ -260,24 +260,24 @@ void display()
                         drawSphere();
                         drawBottomCylinder();
                     glPopMatrix();
-                glPopMatrix(); // end cylinder 
+                glPopMatrix(); // end cylinder
             glPopMatrix();
         glPopMatrix();
     glPopMatrix();
     drawTrail();
-    glutSwapBuffers();        
+    glutSwapBuffers();
 }
 
 
 void reshapeFunc(int x, int y)
 {
     if (y == 0 || x == 0) return;  //Nothing is visible then, so return
-    glMatrixMode(GL_PROJECTION);  
+    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-     
+
     gluPerspective(39.0,(GLdouble)x/(GLdouble)y,0.01,48.0);
     glMatrixMode(GL_MODELVIEW);
- 
+
     glViewport(0,0,x,y);  //Use the whole window for rendering
 }
 
@@ -307,7 +307,7 @@ void initLight()
    glLightfv(GL_LIGHT0, GL_SPECULAR, mat_specular);
    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 }
-void init(void) 
+void init(void)
 {
     initLight();
     glEnable(GL_DEPTH_TEST);
@@ -317,18 +317,18 @@ void init(void)
 int main (int argc, char **argv)
 {
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);  
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(500,500);
     glutCreateWindow("Pendulum");
     init();
 
     //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);  //---> only wireframe
-    
+
     glutReshapeFunc(reshapeFunc);
     glutDisplayFunc(display);
     glutIdleFunc(idleFunc);
 
-    glutKeyboardFunc(keyPressed); 
+    glutKeyboardFunc(keyPressed);
     glutKeyboardUpFunc(keyUp);
 
     glutMainLoop();
