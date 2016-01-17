@@ -1,96 +1,162 @@
 #include <GL/gl.h>
 #include <GL/glut.h>
 #include <vector>
-#include <algorithm>
 #include <map>
-#include <vector>
 #include <iostream>
 
 using namespace std;
 
-// struct RotateParam {
-    //....
-//}
-typedef struct {
+struct RotateParam {
     bool rotate;
     double angle;
     int direction;
-} RotateParam;
+};
+
+GLfloat gray[] = { 0.4f, 0.4f, 0.4f, 1.0f };
+GLfloat white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+GLfloat green[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+GLfloat blue[] = { 0.647, 0.874f, 0.949, 1.0f };
+GLfloat black[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+vector<vector<float>> trail(1, vector<float>(16));
+int trail_index = 0;
 
 vector<map<char, RotateParam>> rotate_axis = {
     {{'x', {false, 0.0, 0}}, {'y', {false, 0.0, 0}}, {'z', {false, 0.0, 0}}}, 
     {{'x', {false, 0.0, 0}}, {'y', {false, 0.0, 0}}, {'z', {false, 90.0, 0}}}
     };
 
-void drawCube()
+
+class Rectangle {
+public:
+    Rectangle(const float length, const float height, const float width)
+        : length {length}
+        , height {height}
+        , width {width}
+        { }
+    const float length, height, width;
+    void draw(void);
+};
+
+void Rectangle::draw(void)
 {
-    GLfloat green[] = { 0.4f, 0.4f, 0.4f, 1.0f };
-    GLfloat white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, green);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, gray);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, gray);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0);
     glPushMatrix();
         glBegin(GL_QUADS);
 
-        //prednja
-        glNormal3f(0, 0, 1);
+        //front
+        glNormal3f(0.0f, 0.0f, 1.0f);	// N front face
         glVertex3f(0, 0, 0);
-        glNormal3f(0, 0, 0);
-        glVertex3f(3, 0, 0);
+        glVertex3f(length, 0, 0);
+        glVertex3f(length, 1, 0);
+        glVertex3f(0, height, 0);
+
+        //right
         glNormal3f(1, 0, 0);
-        glVertex3f(3, 1, 0);
-        glNormal3f(0, 0, 0);
-        glVertex3f(0, 1, 0);
+        glVertex3f(length, 0, 0);
+        glVertex3f(length, 0, width);
+        glVertex3f(length, height, width);
+        glVertex3f(length, height, 0);
 
-        //desna
-        glVertex3f(3, 0, 0);
-        glVertex3f(3, 0, 3);
-        glVertex3f(3, 1, 3);
-        glVertex3f(3, 1, 0);
+        //upper
+        glNormal3f(0, 1, 0);
+        glVertex3f(0, height, 0);
+        glVertex3f(length, height, 0);
+        glVertex3f(length, height, width);
+        glVertex3f(0, height, width);
 
-        //gornja
-        glVertex3f(0, 1, 0);
-        glVertex3f(3, 1, 0);
-        glVertex3f(3, 1, 3);
-        glVertex3f(0, 1, 3);
-
-        //lijeva
+        //left
+        glNormal3f(-1, 0, 0);
         glVertex3f(0, 0, 0);
-        glVertex3f(0, 0, 3);
-        glVertex3f(0, 1, 3);
-        glVertex3f(0, 1, 0);
+        glVertex3f(0, 0, width);
+        glVertex3f(0, height, width);
+        glVertex3f(0, height, 0);
 
-        //straznja
-        glVertex3f(0, 0, 3);
-        glVertex3f(3, 0, 3);
-        glVertex3f(3, 1, 3);
-        glVertex3f(0, 1, 3);
+        //back
+        glNormal3f(0, 0, -1);
+        glVertex3f(0, 0, width);
+        glVertex3f(length, 0, width);
+        glVertex3f(length, height, width);
+        glVertex3f(0, height, width);
 
-        //donja
+        //lower
+        glNormal3f(0, -1, 0);
         glVertex3f(0, 0, 0);
-        glVertex3f(3, 0, 0);
-        glVertex3f(3, 0, 3);
-        glVertex3f(0, 0, 3);
+        glVertex3f(length, 0, 0);
+        glVertex3f(length, 0, 0);
+        glVertex3f(length, 0, width);
+        glVertex3f(0, 0, width);
+
         glEnd();
     glPopMatrix();
 }
+
 void drawSphere(void) {
-    GLfloat green[] = { 0.0f, 1.0f, 0.0f, 1.0f };
-    GLfloat white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, green);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0);
     glutSolidSphere(1.0, 30, 30);
 }
+
+void drawCylinder(void) {
+    GLUquadricObj *obj = gluNewQuadric();
+        glTranslatef(0, -1.0, 0);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, blue);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, blue);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
+        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0);
+    glPushMatrix();
+        glRotatef(90, 1.0, 0, 0);
+        gluDisk(obj, 0.0, 1.0, 30, 30);
+        gluCylinder(obj, 1.0, 1, 3, 30, 30);
+        glPopMatrix();
+    glPushMatrix();
+        glTranslatef(0, -3.0, 0);
+        glPushMatrix();
+            glRotatef(-90, 1.0, 0, 0);
+            gluDisk(obj, 0.0, 1.0, 30, 30);
+        glPopMatrix();
+}
+
+void drawBottomCylinder(void) {
+    GLUquadricObj *obj = gluNewQuadric();
+    glPushMatrix();
+        glTranslatef(0, -1.0, 0);
+        glPushMatrix();
+            GLfloat orange[] = { 1.0, 0.47, 0.0, 1.0 };
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, orange);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, orange);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
+            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0);
+            glRotatef(90, 1.0, 0, 0);
+            gluDisk(obj, 0.0, 1.0, 30, 30);
+            gluCylinder(obj, 1.0, 1, 3, 30, 30);
+        glPopMatrix();
+        glPushMatrix();
+            glPushMatrix();
+                glTranslatef(0, -3.0, 0);
+                glRotatef(-90, 1.0, 0, 0);
+                gluDisk(obj, 0.0, 1.0, 30, 30);
+                trail_index++;
+                vector<float> tmp (16);
+                trail.push_back(tmp);
+                glGetFloatv(GL_MODELVIEW_MATRIX, &trail[trail_index][0]);
+            glPopMatrix();
+        glPopMatrix();
+    glPopMatrix();
+}
+
 bool keyStates[256];
 bool animate = 1;
 
 void keyPressed (unsigned char key, int /*x*/, int /*y*/) 
 {
     keyStates[key] = true; 
-    cout<<key<<" key pressed"<<endl;
+    cout << key << " key pressed"<<endl;
 }
 
 void keyUp (unsigned char key, int /*x*/, int /*y*/) 
@@ -102,10 +168,6 @@ void keyUp (unsigned char key, int /*x*/, int /*y*/)
 
 void keyOperations () 
 {
-    // switch(keystates[key]){
-    //    case  'q':
-    //}
-    //}
     if (keyStates[27] == true) {
         exit(0);
     } else if (keyStates['q'] == true) {
@@ -133,15 +195,19 @@ void keyOperations ()
     }
 }
 
-//vector array
-// vector<array<float, 16>> trail;
-vector<vector<float>> trail(1, vector<float>(16));
-
-int i = 0;
-
-void display()
-{
-    //angle collistion detection
+void drawTrail(){
+    glBegin(GL_LINE_STRIP);
+    GLfloat red[] = { 1.0, 0.0, 0.0, 1.0 };
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, red);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, red);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 80.0);
+    for(int j = 0; j < trail_index; j++){
+        glVertex3f(trail[j][12], trail[j][13], trail[j][14]);
+    }
+    glEnd();
+}
+void increaseAngle() {
     for (auto& i: rotate_axis) {
         for (auto& kv: i) {
             if(kv.second.rotate) {
@@ -161,19 +227,22 @@ void display()
             }
         }
     }
-    //glClearColor (0.3, 0.3, 0.3, 0.0);
+}
+
+void display()
+{
+    increaseAngle();
     glMatrixMode(GL_MODELVIEW);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
-    //glRotatef(180, 1, 0, 0);
     glPushMatrix();
-        glTranslatef(0.0, 0.0, -1.9);
-        glScalef(0.04, 0.04, 0.04);
-    glPushMatrix();
+        gluLookAt(0, 0, 39,
+                  0, 0,  1,
+                  0, 1, 0);
         glPushMatrix();
             glTranslatef(-1.5, 0.0, -1.5);
-            drawCube();
+            Rectangle rectangle(3.0, 1.0, 3.0);
+            rectangle.draw();
         glPopMatrix();
         glPushMatrix();
             glTranslatef(0, -1.0, 0);
@@ -182,87 +251,20 @@ void display()
             }
             drawSphere();
             glPushMatrix();
-                GLUquadricObj *obj = gluNewQuadric();
-                glTranslatef(0, -1.0, 0);
-
-                GLfloat blue[] = { 0.647, 0.874f, 0.949, 1.0f };
-                GLfloat white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-                GLfloat black[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-                glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, blue);
-                glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, blue);
-                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
-                glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0);
-                glPushMatrix();
-                    glRotatef(90, 1.0, 0, 0);
-                    gluDisk(obj, 0.0, 1.0, 30, 30);
-                    gluCylinder(obj, 1.0, 1, 3, 30, 30);
-                glPopMatrix();
-                glPushMatrix();
-                    glTranslatef(0, -3.0, 0);
-                    glPushMatrix();
-                        glRotatef(-90, 1.0, 0, 0);
-                        gluDisk(obj, 0.0, 1.0, 30, 30);
-                    glPopMatrix();
-
-                    /* 2nd constellation */
-
+                drawCylinder();
                     glPushMatrix();
                         glTranslatef(0, -1.0, 0);
-
                         for (auto& kv: rotate_axis[1]) {
                             glRotatef(kv.second.angle, (float)kv.first == 'x', (float)kv.first == 'y', (float)kv.first == 'z');
                         }
                         drawSphere();
-                        glPushMatrix();
-                            glTranslatef(0, -1.0, 0);
-                            glPushMatrix();
-                                GLfloat orange[] = { 1.0, 0.47, 0.0, 1.0 };
-                                glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, orange);
-                                glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, orange);
-                                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
-                                glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0);
-                                glRotatef(90, 1.0, 0, 0);
-                                gluDisk(obj, 0.0, 1.0, 30, 30);
-                                gluCylinder(obj, 1.0, 1, 3, 30, 30);
-                            glPopMatrix();
-                            glPushMatrix();
-                                glPushMatrix();
-                                    glTranslatef(0, -3.0, 0);
-                                    glRotatef(-90, 1.0, 0, 0);
-                                    gluDisk(obj, 0.0, 1.0, 30, 30);
-                                    i++;
-                                    // array<float, 16> tmp;
-                                    // glGetFloatv(GL_MODELVIEW_MATRIX, &tmp);
-                                    vector<float> tmp (16);
-                                    trail.push_back(tmp);
-                                    glGetFloatv(GL_MODELVIEW_MATRIX, &trail[i][0]);
-                                glPopMatrix();
-                            glPopMatrix();
-                        glPopMatrix();
-                    glPopMatrix(); /* end 2nd constellation */
-                glPopMatrix();
+                        drawBottomCylinder();
+                    glPopMatrix();
+                glPopMatrix(); // end cylinder 
             glPopMatrix();
         glPopMatrix();
     glPopMatrix();
-
-    glPopMatrix();
-    glBegin(GL_LINE_STRIP);
-    //GLfloat red[] = { 0.545, 0.0, 0.0, 1.0 };
-    GLfloat red[] = { 1.0, 0.0, 0.0, 1.0 };
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, red);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, red);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 80.0);
-    //glColor3f(0.545, 0.0, 0.0);
-    for(int j = 0; j < i-1; j++){
-        //glLoadMatrixf(trail[j]);
-        //glVertex3f(0.0, 0.0, 0.0);
-        //cout << trail[j][12] << ", " <<  trail[j][13] << ", " << trail[j][14] << "," << endl;
-        
-        glVertex3f(trail[j][12], trail[j][13], trail[j][14]);
-        
-    }
-    glEnd();
+    drawTrail();
     glutSwapBuffers();        
 }
 
@@ -270,14 +272,10 @@ void display()
 void reshapeFunc(int x, int y)
 {
     if (y == 0 || x == 0) return;  //Nothing is visible then, so return
-    //Set a new projection matrix
     glMatrixMode(GL_PROJECTION);  
     glLoadIdentity();
-    //Angle of view:40 degrees
-    //Near clipping plane distance: 0.5
-    //Far clipping plane distance: 90.0
      
-    gluPerspective(39.0,(GLdouble)x/(GLdouble)y,0.6,21.0);
+    gluPerspective(39.0,(GLdouble)x/(GLdouble)y,0.01,48.0);
     glMatrixMode(GL_MODELVIEW);
  
     glViewport(0,0,x,y);  //Use the whole window for rendering
@@ -307,9 +305,7 @@ void initLight()
    glLightfv(GL_LIGHT0, GL_AMBIENT, mat_ambient);
    glLightfv(GL_LIGHT0, GL_DIFFUSE, cyan);
    glLightfv(GL_LIGHT0, GL_SPECULAR, mat_specular);
-
    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-   //glEnable(GL_COLOR_MATERIAL);
 }
 void init(void) 
 {
@@ -320,20 +316,14 @@ void init(void)
 
 int main (int argc, char **argv)
 {
-    //Initialize GLUT
     glutInit(&argc, argv);
-    //double buffering used to avoid flickering problem in animation
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);  
-    // window size
     glutInitWindowSize(500,500);
-    // create the window 
     glutCreateWindow("Pendulum");
     init();
 
-    //glEnable(GL_DEPTH_CLAMP); //dont cut out clip plane
-
     //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);  //---> only wireframe
-    //Assign  the function used in events
+    
     glutReshapeFunc(reshapeFunc);
     glutDisplayFunc(display);
     glutIdleFunc(idleFunc);
