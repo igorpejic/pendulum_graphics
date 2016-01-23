@@ -12,22 +12,23 @@ struct RotateParam {
     int direction;
 };
 
-GLfloat gray[] = { 0.4f, 0.4f, 0.4f, 1.0f };
+GLfloat red[] = { 0.541176f, 0.1098f, 0.1098f, 1.0f };
+GLfloat gray[] = { 0.6f, 0.6f, 0.6f, 1.0f };
 GLfloat white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-GLfloat green[] = { 0.0f, 1.0f, 0.0f, 1.0f };
-GLfloat blue[] = { 0.647, 0.874f, 0.949, 1.0f };
+GLfloat green[] = { 0.1f, 0.9f, 0.1f, 1.0f };
+GLfloat blue[] = { 0.647f, 0.874f, 0.949f, 1.0f };
 GLfloat black[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 bool keyStates[256];
 bool animate = 0;
 
-vector<vector<float>> trail(1, vector<float>(16));
+vector<vector<float> > trail(1, vector<float>(16));
 int trail_index = 0;
 
-vector<map<char, RotateParam>> rotate_axis = {
+vector<map <char, RotateParam> > rotate_axis = {
     {{'x', {false, 0.0, 0}}, {'y', {false, 0.0, 0}}, {'z', {false, 0.0, 0}}},
     {{'x', {false, 0.0, 0}}, {'y', {false, 0.0, 0}}, {'z', {false, 90.0, 0}}}
-    };
+};
 
 void drawSphere(void);
 void drawCylinder(void);
@@ -37,6 +38,64 @@ void drawTrail(void);
 void keyOperations(void);
 void keyPressed(unsigned char key, int, int);
 void keyUp (unsigned char key, int, int);
+void display();
+void reshapeFunc(int x, int y);
+void idleFunc();
+void initLight();
+void init();
+
+int main (int argc, char **argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+    glutInitWindowSize(500,500);
+    glutCreateWindow("Pendulum");
+    init();
+
+    glutReshapeFunc(reshapeFunc);
+    glutDisplayFunc(display);
+    glutIdleFunc(idleFunc);
+
+    glutKeyboardFunc(keyPressed);
+    glutKeyboardUpFunc(keyUp);
+
+    glutMainLoop();
+    return 0;
+}
+
+void init()
+{
+    initLight();
+    glEnable(GL_DEPTH_TEST);
+}
+
+void initLight()
+{
+   glEnable(GL_LIGHTING);
+   glEnable(GL_LIGHT0);
+   GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+   GLfloat mat_ambient[] = {0.2f, 0.2f, 0.2f, 1.f};
+
+   GLfloat light_position[] = { 0.8, 0.8, -3.5, 0.2 };
+   glShadeModel (GL_SMOOTH);
+
+   glLightfv(GL_LIGHT0, GL_AMBIENT, mat_ambient);
+   glLightfv(GL_LIGHT0, GL_DIFFUSE, white);
+   glLightfv(GL_LIGHT0, GL_SPECULAR, mat_specular);
+   glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+}
+
+void reshapeFunc(int x, int y)
+{
+    if (y == 0 || x == 0) return;  //Nothing is visible then, so return
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    gluPerspective(39.0,(GLdouble)x/(GLdouble)y,1.0,48.0);
+    glMatrixMode(GL_MODELVIEW);
+
+    glViewport(0,0,x,y);  //Use the whole window for rendering
+}
 
 class Rectangle {
 public:
@@ -48,6 +107,45 @@ public:
     const float length, height, width;
     void draw(void);
 };
+
+void display()
+{
+    increaseAngle();
+    glMatrixMode(GL_MODELVIEW);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+    glPushMatrix();
+        gluLookAt(0, 0, 39,
+                  0, 0,  1,
+                  0, 1, 0);
+        glPushMatrix();
+            glTranslatef(-1.5, 0.0, -1.5);
+            Rectangle rectangle(3.0, 1.0, 3.0);
+            rectangle.draw();
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(0, -1.0, 0);
+            for (auto& kv: rotate_axis[0]) {
+                glRotatef(kv.second.angle, kv.first == 'x', kv.first == 'y', kv.first == 'z');
+            }
+            drawSphere();
+            glPushMatrix();
+                drawCylinder();
+                    glPushMatrix();
+                        glTranslatef(0, -1.0, 0);
+                        for (auto& kv: rotate_axis[1]) {
+                            glRotatef(kv.second.angle, kv.first == 'x', kv.first == 'y', kv.first == 'z');
+                        }
+                        drawSphere();
+                        drawBottomCylinder();
+                    glPopMatrix();
+                glPopMatrix(); // end cylinder
+            glPopMatrix();
+        glPopMatrix();
+    glPopMatrix();
+    drawTrail();
+    glutSwapBuffers();
+}
 
 void Rectangle::draw(void)
 {
@@ -103,113 +201,6 @@ void Rectangle::draw(void)
 
         glEnd();
     glPopMatrix();
-}
-
-
-
-void display()
-{
-    increaseAngle();
-    glMatrixMode(GL_MODELVIEW);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
-    glPushMatrix();
-        gluLookAt(0, 0, 39,
-                  0, 0,  1,
-                  0, 1, 0);
-        glPushMatrix();
-            glTranslatef(-1.5, 0.0, -1.5);
-            Rectangle rectangle(3.0, 1.0, 3.0);
-            rectangle.draw();
-        glPopMatrix();
-        glPushMatrix();
-            glTranslatef(0, -1.0, 0);
-            for (auto& kv: rotate_axis[0]) {
-                glRotatef(kv.second.angle, (float)kv.first == 'x', (float)kv.first == 'y', (float)kv.first == 'z');
-            }
-            drawSphere();
-            glPushMatrix();
-                drawCylinder();
-                    glPushMatrix();
-                        glTranslatef(0, -1.0, 0);
-                        for (auto& kv: rotate_axis[1]) {
-                            glRotatef(kv.second.angle, (float)kv.first == 'x', (float)kv.first == 'y', (float)kv.first == 'z');
-                        }
-                        drawSphere();
-                        drawBottomCylinder();
-                    glPopMatrix();
-                glPopMatrix(); // end cylinder
-            glPopMatrix();
-        glPopMatrix();
-    glPopMatrix();
-    drawTrail();
-    glutSwapBuffers();
-}
-
-
-void reshapeFunc(int x, int y)
-{
-    if (y == 0 || x == 0) return;  //Nothing is visible then, so return
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    gluPerspective(39.0,(GLdouble)x/(GLdouble)y,0.01,48.0);
-    glMatrixMode(GL_MODELVIEW);
-
-    glViewport(0,0,x,y);  //Use the whole window for rendering
-}
-
-void idleFunc(void)
-{
-    keyOperations();
-    if (animate) {
-        display();
-    }
-    return;
-}
-
-void initLight()
-{
-   glEnable(GL_LIGHTING);
-   glEnable(GL_LIGHT0);
-   GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-   GLfloat cyan[] = {0.8f, 0.8f, 0.8f, 1.f};
-   GLfloat mat_ambient[] = {0.2f, 0.2f, 0.2f, 1.f};
-
-   GLfloat mat_shininess[] = { 50.0 };
-   GLfloat light_position[] = { 0.8, 0.8, -3.5, 0.2 };
-   glShadeModel (GL_SMOOTH);
-
-   glLightfv(GL_LIGHT0, GL_AMBIENT, mat_ambient);
-   glLightfv(GL_LIGHT0, GL_DIFFUSE, cyan);
-   glLightfv(GL_LIGHT0, GL_SPECULAR, mat_specular);
-   glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-}
-void init(void)
-{
-    initLight();
-    glEnable(GL_DEPTH_TEST);
-}
-
-int main (int argc, char **argv)
-{
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(500,500);
-    glutCreateWindow("Pendulum");
-    init();
-
-    //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);  //---> only wireframe
-
-    glutReshapeFunc(reshapeFunc);
-    glutDisplayFunc(display);
-    glutIdleFunc(idleFunc);
-
-    glutKeyboardFunc(keyPressed);
-    glutKeyboardUpFunc(keyUp);
-
-    glutMainLoop();
-    return 0;
 }
 
 void drawSphere(void) {
@@ -268,11 +259,43 @@ void drawBottomCylinder(void) {
     glPopMatrix();
 }
 
+void drawTrail(){
+    glBegin(GL_LINE_STRIP);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, red);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, red);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, red);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0);
+    for(int j = 0; j < trail_index; j++){
+        glVertex3f(trail[j][12], trail[j][13], trail[j][14]);
+    }
+    glEnd();
+}
+
+void increaseAngle() {
+    for (auto& i: rotate_axis) {
+        for (auto& kv: i) {
+            if(kv.second.rotate) {
+                if(kv.first == 'x' || kv.first == 'z') {
+                    if (i['x'].angle + i['z'].angle >= 90 || i['x'].angle + i['z'].angle <= -90) {
+                        kv.second.direction = (kv.second.direction + 1) % 2;
+                    }
+                    if (kv.second.direction == 0) {
+                        kv.second.angle += 1;
+                    } else if (kv.second.direction == 1) {
+                        kv.second.angle -= 1;
+                    }
+                } else {
+                    kv.second.angle = (int)(kv.second.angle + 1) % 360;
+                }
+
+            }
+        }
+    }
+}
 
 void keyPressed (unsigned char key, int, int)
 {
     keyStates[key] = true;
-    cout << key << " key pressed"<<endl;
 }
 
 void keyUp (unsigned char key, int /*x*/, int /*y*/)
@@ -280,7 +303,6 @@ void keyUp (unsigned char key, int /*x*/, int /*y*/)
     keyStates[key] = false;
     return;
 }
-
 
 void keyOperations ()
 {
@@ -311,36 +333,11 @@ void keyOperations ()
     }
 }
 
-void drawTrail(){
-    glBegin(GL_LINE_STRIP);
-    GLfloat red[] = { 1.0, 0.0, 0.0, 1.0 };
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, red);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, red);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 80.0);
-    for(int j = 0; j < trail_index; j++){
-        glVertex3f(trail[j][12], trail[j][13], trail[j][14]);
+void idleFunc()
+{
+    keyOperations();
+    if (animate) {
+        display();
     }
-    glEnd();
-}
-void increaseAngle() {
-    for (auto& i: rotate_axis) {
-        for (auto& kv: i) {
-            if(kv.second.rotate) {
-                if(kv.first == 'x' || kv.first == 'z') {
-                    if (i['x'].angle + i['z'].angle >= 90 || i['x'].angle + i['z'].angle <= -90) {
-                        kv.second.direction = (kv.second.direction + 1) % 2;
-                    }
-                    if (kv.second.direction == 0) {
-                        kv.second.angle += 1;
-                    } else if (kv.second.direction == 1) {
-                        kv.second.angle -= 1;
-                    }
-                } else {
-                    kv.second.angle = (int)(kv.second.angle + 1) % 360;
-                }
-
-            }
-        }
-    }
+    return;
 }
