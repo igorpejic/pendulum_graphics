@@ -1,7 +1,11 @@
+Readme in Croatian language:
+
+![specification](https://raw.github.com/igorpejic/pendulum_graphics/blob/master/specification.png)
+
 Zadatak 3.
 
-Slika iz zadatka je realizirana tako da gornji pravokutnik predstavlja objekt koji visi sa stropa (tj. pravokutnik nije strop).
-To znaci da pravokutnik ogranicava prvi cilindar, ali drugi se moze naci iznad pravokutnika.
+Slika iz zadatka je realizirana tako da gornji paralelepiped predstavlja objekt koji visi sa stropa (tj. paralelepiped nije strop).
+To znaci da paralelepiped ogranicava prvi cilindar, ali drugi se moze naci iznad paralelepiped.
 
 Koristenjem glPushMatrix i glPopMatrix te translacijama (glTranslatef) i rotacijama (glRotatef) realizira se hijerarhijsko modeliranje kojim se dobiva dvostruko njihalo sa slike.
 

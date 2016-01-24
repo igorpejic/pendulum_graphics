@@ -110,12 +110,12 @@ void reshapeFunc(int x, int y)
 }
 
 /**
- * Rectangle Class defined with length, height and width providing draw() method.
+ * Parallelepiped Class defined with length, height and width providing draw() method.
  */
-class Rectangle
+class Parallelepiped
 {
     public:
-        Rectangle(const float length, const float height, const float width)
+        Parallelepiped(const float length, const float height, const float width)
             : length {length}
             , height {height}
             , width {width}
@@ -125,7 +125,7 @@ class Rectangle
 };
 
 /**
- * Draw rectangle, two spheres and two cylinders as shown on exercise instructions
+ * Draw Parallelepiped, two spheres and two cylinders as shown on exercise instructions
  * using hierarchical modeling.
  */
 void display()
@@ -141,8 +141,8 @@ void display()
                   0, 1, 0);
         glPushMatrix();
             glTranslatef(-1.5, 0.0, -1.5);
-            Rectangle rectangle(3.0, 1.0, 3.0);
-            rectangle.draw();
+            Parallelepiped parallelepiped(3.0, 1.0, 3.0);
+            parallelepiped.draw();
         glPopMatrix();
         glPushMatrix();
             glTranslatef(0, -1.0, 0);
@@ -168,7 +168,7 @@ void display()
     glutSwapBuffers();
 }
 
-void Rectangle::draw(void)
+void Parallelepiped::draw(void)
 {
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, gray);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, gray);
@@ -329,7 +329,7 @@ void increaseAngle()
         for (auto& kv: rotate_axis[j]) {
             if(kv.second.rotate) {
                 if (j == 0){
-                    /** Upper cylinder cant pass rectangle y position */
+                    /** Upper cylinder cant pass parallelepiped y position */
                     if (upperCylinderTopMatrix[13] > 3.11){
                         kv.second.direction = (kv.second.direction + 1) % 2;
                     }
