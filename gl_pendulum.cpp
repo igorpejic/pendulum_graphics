@@ -3,14 +3,9 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <math.h>
 
 using namespace std;
-
-struct RotateParam {
-    bool rotate;
-    double angle;
-    int direction;
-};
 
 GLfloat red[] = { 0.541176f, 0.1098f, 0.1098f, 1.0f };
 GLfloat gray[] = { 0.6f, 0.6f, 0.6f, 1.0f };
@@ -24,6 +19,16 @@ bool animate = 0;
 
 vector<vector<float> > trail(1, vector<float>(16));
 int trail_index = 0;
+
+vector<float> upperCylinderTopMatrix (16);
+vector<float> upperCylinderBottomMatrix (16);
+vector<float> lowerCylinderBottomMatrix (16);
+
+struct RotateParam {
+    bool rotate;
+    double angle;
+    int direction;
+};
 
 vector<map <char, RotateParam> > rotate_axis = {
     {{'x', {false, 0.0, 0}}, {'y', {false, 0.0, 0}}, {'z', {false, 0.0, 0}}},
@@ -48,7 +53,7 @@ int main (int argc, char **argv)
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(500,500);
+    glutInitWindowSize(600,600);
     glutCreateWindow("Pendulum");
     init();
 
@@ -91,7 +96,7 @@ void reshapeFunc(int x, int y)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    gluPerspective(39.0,(GLdouble)x/(GLdouble)y,1.0,48.0);
+    gluPerspective(30.0,(GLdouble)x/(GLdouble)y,1.0,48.0);
     glMatrixMode(GL_MODELVIEW);
 
     glViewport(0,0,x,y);  //Use the whole window for rendering
@@ -200,6 +205,7 @@ void Rectangle::draw(void)
         glVertex3f(0, 0, width);
 
         glEnd();
+
     glPopMatrix();
 }
 
@@ -222,12 +228,14 @@ void drawCylinder(void) {
         glRotatef(90, 1.0, 0, 0);
         gluDisk(obj, 0.0, 1.0, 30, 30);
         gluCylinder(obj, 1.0, 1, 3, 30, 30);
+        glGetFloatv(GL_MODELVIEW_MATRIX, &upperCylinderTopMatrix[0]);
         glPopMatrix();
     glPushMatrix();
         glTranslatef(0, -3.0, 0);
         glPushMatrix();
             glRotatef(-90, 1.0, 0, 0);
             gluDisk(obj, 0.0, 1.0, 30, 30);
+            glGetFloatv(GL_MODELVIEW_MATRIX, &upperCylinderBottomMatrix[0]);
         glPopMatrix();
 }
 
@@ -244,6 +252,7 @@ void drawBottomCylinder(void) {
             glRotatef(90, 1.0, 0, 0);
             gluDisk(obj, 0.0, 1.0, 30, 30);
             gluCylinder(obj, 1.0, 1, 3, 30, 30);
+            glGetFloatv(GL_MODELVIEW_MATRIX, &lowerCylinderBottomMatrix[0]);
         glPopMatrix();
         glPushMatrix();
             glPushMatrix();
@@ -270,24 +279,43 @@ void drawTrail(){
     }
     glEnd();
 }
+int offset;
 
 void increaseAngle() {
-    for (auto& i: rotate_axis) {
-        for (auto& kv: i) {
+    for (unsigned int j = 0; j < rotate_axis.size(); j++) {
+        for (auto& kv: rotate_axis[j]) {
             if(kv.second.rotate) {
-                if(kv.first == 'x' || kv.first == 'z') {
-                    if (i['x'].angle + i['z'].angle >= 90 || i['x'].angle + i['z'].angle <= -90) {
+                if (j == 0){
+                    if (upperCylinderTopMatrix[13] > -0.89){
                         kv.second.direction = (kv.second.direction + 1) % 2;
                     }
                     if (kv.second.direction == 0) {
-                        kv.second.angle += 1;
+                        kv.second.angle = ((int)kv.second.angle + 1) % 360;
                     } else if (kv.second.direction == 1) {
-                        kv.second.angle -= 1;
+                        kv.second.angle = (int)kv.second.angle + -1;
                     }
-                } else {
-                    kv.second.angle = (int)(kv.second.angle + 1) % 360;
-                }
+                } else if (j == 1) {
+                    float d1 = sqrt(
+                            ((lowerCylinderBottomMatrix[13] - upperCylinderBottomMatrix[13]) * (lowerCylinderBottomMatrix[13] - upperCylinderBottomMatrix[13])) +
+                            ((lowerCylinderBottomMatrix[14] - upperCylinderBottomMatrix[14]) * (lowerCylinderBottomMatrix[14] - upperCylinderBottomMatrix[14]) +
+                             ((lowerCylinderBottomMatrix[15] - upperCylinderBottomMatrix[15]) * (lowerCylinderBottomMatrix[15] - upperCylinderBottomMatrix[15]))));
 
+                    if(offset <= 0){
+                        if (d1 <= 1.01){
+                            kv.second.direction = (kv.second.direction + 1) % 2;
+                            offset = 100;
+                        }
+                        else {
+                        }
+                    } else{
+                        offset--;
+                    }
+                    if (kv.second.direction == 0) {
+                        kv.second.angle = (int)kv.second.angle + 1;
+                    } else if (kv.second.direction == 1) {
+                        kv.second.angle = (int)kv.second.angle - 1;
+                    }
+                }
             }
         }
     }
