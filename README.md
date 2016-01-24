@@ -1,6 +1,6 @@
 Readme in Croatian language:
 
-![specification](https://raw.github.com/igorpejic/pendulum_graphics/blob/master/specification.png)
+![specification](specification.png)
 
 Zadatak 3.
 
